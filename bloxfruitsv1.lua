@@ -1,52 +1,30 @@
--- Byte Hub - versão corrigida
--- Requer um ambiente Luau autorizado que ofereça loadstring e game:HttpGet.
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
-local oldGui = PlayerGui:FindFirstChild("MyButtonGui")
-if oldGui then
-    oldGui:Destroy()
-end
+local player = game.Players.LocalPlayer
+local gui = player:WaitForChild("PlayerGui") -- Get the player's PlayerGui
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MyButtonGui"
-screenGui.ResetOnSpawn = false
-screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-screenGui.Parent = PlayerGui
+screenGui.Parent = gui
 
-local button = Instance.new("TextButton")
+local button = Instance.new("TextButton") -- Use TextButton instead of ImageButton
 button.Name = "MyButton"
 button.Font = Enum.Font.SourceSansBold
-button.TextSize = 16
-button.Size = UDim2.new(0, 110, 0, 50)
-button.Position = UDim2.new(0, 10, 0.5, -25)
-button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-button.TextColor3 = Color3.fromRGB(20, 20, 20)
-button.Text = "Stop Tween"
+button.Size = UDim2.new(0, 100, 0, 50) -- Set size
+button.Position = UDim2.new(0, 10, 0.5, -25) -- Set position to the left with an X offset of 10 pixel
+button.BackgroundColor3 = Color3.fromRGB(255,255,255) -- Set button background color to red
+
+button.Text = "Stop Tween" -- Set button text
 button.Parent = screenGui
 
-local function loadDependency(url, name)
-    local ok, result = pcall(function()
-        local source = game:HttpGet(url)
-        local chunk = loadstring(source)
-        assert(type(chunk) == "function", "loadstring não retornou uma função")
-        return chunk()
-    end)
-    if not ok then
-        error(("Falha ao carregar %s: %s"):format(name, tostring(result)), 0)
-    end
-    return result
+local function onClick()
+    toTarget(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame)
 end
 
+button.MouseButton1Click:Connect(onClick)
+
 ----------------------------------------------------------------------------------------------------------------------------------------------
-local Fluent = loadDependency("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Main%20Fluent.lua", "Fluent")
-local SaveManager = loadDependency("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Save%20Manager.lua", "SaveManager")
-local InterfaceManager = loadDependency("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Interface%20Manager.lua", "InterfaceManager")
+local Fluent = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Main%20Fluent.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Save%20Manager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/DamThien332/UI-Libs/main/Interface%20Manager.lua"))()
 ----------------------------------------------------------------------------------------------------------------------------------------------
 local Window = Fluent:CreateWindow({
     Title = "Byte Hub",
@@ -78,10 +56,7 @@ do
 --------------------------------------------------------------------------------------------------------------------------------------------
 --// Place Id Check
 local id = game.PlaceId
-if id == 2753915549 then First_Sea = true; elseif id == 4442272183 then Second_Sea = true; elseif id == 7449423635 then Third_Sea = true; else
-    warn("Byte Hub: PlaceId não suportado: " .. tostring(id))
-    return
-end;
+if id == 2753915549 then First_Sea = true; elseif id == 4442272183 then Second_Sea = true; elseif id == 7449423635 then Third_Sea = true; else game:Shutdown() end;
 --------------------------------------------------------------------------------------------------------------------------------------------
 --// Flag Player
 function AntiBan()
@@ -2027,12 +2002,13 @@ end
     if Distance >= 1 then
     Speed = 300
     end
-    local tweenObject = game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(math.max(Distance / Speed, 0.05), Enum.EasingStyle.Linear), {
+    game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart,TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear), {
       CFrame = P1
-    })
-    tweenObject:Play()
+    }):Play()
     if _G.CancelTween2 then
-        tweenObject:Cancel()
+    game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart,TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear), {
+      CFrame = P1
+    }):Cancel()
     end
     _G.Clip2 = true
     wait(Distance/Speed)
@@ -2177,12 +2153,13 @@ end
     if Distance >= 1 then
     Speed = TweenSpeed
     end
-    local tweenObject = game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart, TweenInfo.new(math.max(Distance / Speed, 0.05), Enum.EasingStyle.Linear), {
+    game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart,TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear), {
       CFrame = P1
-    })
-    tweenObject:Play()
+    }):Play()
     if _G.StopTween then
-        tweenObject:Cancel()
+    game:GetService("TweenService"):Create(game.Players.LocalPlayer.Character.HumanoidRootPart,TweenInfo.new(Distance/Speed, Enum.EasingStyle.Linear), {
+      CFrame = P1
+    }):Cancel()
     end
     end
     function CancelTween(target)
@@ -3054,7 +3031,7 @@ spawn(function()
       
       NormalAttack()
       end
-      until not AutoFarmMasDevilFruit or not v.Parent or v.Humanoid.Health == 0 or game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == false or not game:GetService("Workspace").Enemies:FindFirstChild(v.Name) or TypeMastery ~= 'Level'
+      until not AutoFarmMasDevilFruit or not v.Parent or v.Humanoid.Health == 0 or game:GetService("Players").LocalPlayer.PlayerGui.Main.Quest.Visible == false or not game:GetService("Workspace").Enemies:FindFirstChild(v.Name) or not TypeMastery == 'Level'
       bringmob = false
       _G.UseSkill = false
       
@@ -3987,7 +3964,7 @@ while wait() do
                 local v = CheckPirateBoat()
                 repeat
                     wait()
-                    task.spawn(function() Tween(v.Engine.CFrame * CFrame.new(0, -20, 0)) end)
+                    spawn(Tween(v.Engine.CFrame * CFrame.new(0, -20, 0)), 1)
                     AimBotSkillPosition = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, -5, 0)
                     Skillaimbot = true
                     AutoSkill = false
@@ -7956,11 +7933,11 @@ Options.ToggleMirageIsland:SetValue(false)
 spawn(function()
     while wait() do
     if _G.FindMirageIsland then
-        if game:GetService("Workspace").Map:FindFirstChild("MysticIsland") then
+        if game:GetService("Workspace").Map:FindFirstChild("MysticIsland") or game:GetService("Workspace").Map:FindFirstChild("MysticIsland") then
             if HighestPointRealCFrame and (game.Players.LocalPlayer.Character.HumanoidRootPart.Position - HighestPointRealCFrame.Position).Magnitude > 10 then
             Tween(getHighestPoint().CFrame * CFrame.new(0, 211.88, 0))
                 end
-        else
+        elseif not game:GetService("Workspace").Map:FindFirstChild("MysticIsland") or not game:GetService("Workspace").Map:FindFirstChild("MysticIsland") then
             Hop()
             end
         end
@@ -7971,5 +7948,5 @@ end
 Fluent:Notify({
     Title = "Byte hub",
     Content = "Sucess Loaded!",
-    Duration = 3
+    Durtion = 3
 })
