@@ -1,4 +1,4 @@
--- KRATOS UPDATE30 V3: farm controller + remote-only random fruit
+-- KRATOS REMOTE FRUIT V4 - 2026-10-01: farm movement + Check/Buy + accurate result handling
 --!nocheck
 --[[
     V34 WRD SAFE + AUTO RANDOM + SABER FIX
@@ -6325,8 +6325,17 @@ function FruitSystem.AutoRandomTick()
             __KRATOS_ENV.__KRATOS_RANDOM_OWNER = LocalPlayer.UserId
             __KRATOS_ENV.__KRATOS_RANDOM_NEXT_AT = FruitSystem.RandomNextAt
         elseif now >= FruitSystem.RandomConfirmUntil then
-            local result = tostring(FruitSystem.RandomResult or "no fruit received")
-            FruitSystem.EndRandomRoll("not confirmed: " .. result:sub(1, 100), FruitSystem.RandomResponseDelay(result))
+            local result
+            if FruitSystem.RandomCallOK == false then
+                result = "remote error: " .. tostring(FruitSystem.RandomResult)
+            elseif FruitSystem.RandomResult == nil then
+                result = "no fruit received; Buy=nil; Check=" .. tostring(FruitSystem.RandomCheckResult)
+            else
+                result = "no fruit received; Buy=" .. tostring(FruitSystem.RandomResult)
+            end
+            local retryResponse = FruitSystem.RandomResult
+            if retryResponse == nil then retryResponse = FruitSystem.RandomCheckResult end
+            FruitSystem.EndRandomRoll("not confirmed: " .. result:sub(1, 100), FruitSystem.RandomResponseDelay(retryResponse))
         end
         return false
     end
@@ -6346,6 +6355,9 @@ function FruitSystem.AutoRandomTick()
     FruitSystem.RandomBeforeTools = FruitSystem.GetOwnedFruitSet()
     FruitSystem.RandomObtainedName = nil
     FruitSystem.RandomResult = nil
+    FruitSystem.RandomCallOK = nil
+    FruitSystem.RandomCheckOK = nil
+    FruitSystem.RandomCheckResult = nil
     FruitSystem.RandomPending = true
     FruitSystem.RandomBuying = true
     FruitSystem.RandomActive = true
@@ -6359,14 +6371,26 @@ function FruitSystem.AutoRandomTick()
             end
             local remote = CommF_ or WaitForCommF(2)
             if not remote then return "CommF_ missing" end
+            -- Compatibility handshake used by public Check -> Buy examples.
+            -- Its result is diagnostic only: unknown values must not block Buy.
+            local checkOK, checkResult = pcall(function()
+                return remote:InvokeServer("Cousin", "Check")
+            end)
+            FruitSystem.RandomCheckOK = checkOK
+            FruitSystem.RandomCheckResult = checkResult
+            if not IsCurrentSession() or not AutomationMovementAllowed() or Config.FruitAutoRandom ~= true then
+                return "cancelled"
+            end
             return remote:InvokeServer("Cousin", "Buy")
         end)
         FruitSystem.RandomPending = false
         FruitSystem.RandomBuying = false
         if IsCurrentSession() and Config.FruitAutoRandom == true and AutomationMovementAllowed() then
             FruitSystem.RandomActive = true
-            FruitSystem.RandomResult = ok and response or ("remote error: " .. tostring(response))
-            FruitSystem.RandomConfirmUntil = tick() + 4
+            -- pcall can succeed and return nil/false. Preserve both separately.
+            FruitSystem.RandomCallOK = ok
+            FruitSystem.RandomResult = response
+            FruitSystem.RandomConfirmUntil = tick() + 12
             FruitSystem.LastStoreScanAt = 0
         end
     end)
@@ -17236,7 +17260,7 @@ end
 --=====================================================================================
 
 function Initialize()
-    Logger.info("Initializing Kratos Ultimate Hub v2.0 V29...")
+    Logger.info("Initializing Kratos Kaitun REMOTE FRUIT V4 - 2026-10-01...")
 
     if not game:IsLoaded() then
         game.Loaded:Wait()
